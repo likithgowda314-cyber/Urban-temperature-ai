@@ -13,8 +13,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip as ChartTooltip, Legend, Line, ComposedChart, PieChart, Pie, Cell
 } from 'recharts';
-import L from 'leaflet';
-import 'leaflet.heat';
+import { GoogleMap, useJsApiLoader, HeatmapLayer, Rectangle, InfoWindow, Marker } from '@react-google-maps/api';
 
 const { Header, Content, Sider } = Layout;
 
@@ -79,122 +78,84 @@ const INTERVENTIONS = [
   }
 ];
 
-// Leaflet custom map component using direct ref for React 19 compatibility
-function LeafletMap({ cityCenter, gridData, selectedCell, onSelectCell }) {
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const gridGroupRef = useRef(null);
+// Libraries array must be statically defined outside component to prevent infinite re-renders
+const libraries = ['visualization'];
 
-  const heatLayerRef = useRef(null);
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+  borderRadius: '16px'
+};
 
-  // Initialize Map and Layer Group
-  useEffect(() => {
-    if (!mapRef.current) return;
+const mapOptions = {
+  disableDefaultUI: true,
+  zoomControl: true,
+  styles: [
+    { elementType: "geometry", stylers: [{ color: "#212121" }] },
+    { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+    { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#757575" }] },
+    { featureType: "administrative.country", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+    { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
+    { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
+    { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+    { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#181818" }] },
+    { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+    { featureType: "poi.park", elementType: "labels.text.stroke", stylers: [{ color: "#1b1b1b" }] },
+    { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#2c2c2c" }] },
+    { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
+    { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#373737" }] },
+    { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#3c3c3c" }] },
+    { featureType: "road.highway.controlled_access", elementType: "geometry", stylers: [{ color: "#4e4e4e" }] },
+    { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+    { featureType: "transit", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+    { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] },
+    { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d3d3d" }] }
+  ]
+};
 
-    // Create Leaflet instance
-    const map = L.map(mapRef.current, {
-      center: cityCenter,
-      zoom: 12,
-      zoomControl: true,
-      attributionControl: true,
-    });
+// Google Map Component
+function GoogleMapComponent({ cityCenter, gridData, selectedCell, onSelectCell, onMapClick }) {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries
+  });
 
-    // Add Premium Dark basemap from CartoDB
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 20
-    }).addTo(map);
-
-    mapInstanceRef.current = map;
-    
-    // Feature group to hold all cell rectangles
-    const gridGroup = L.featureGroup().addTo(map);
-    gridGroupRef.current = gridGroup;
-
-    // Pan map when city changes
-    map.setView(cityCenter, 12);
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-      gridGroupRef.current = null;
-      heatLayerRef.current = null;
-    };
-  }, [cityCenter]);
-
-  // Redraw grid rectangles when data or selection changes
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    const gridGroup = gridGroupRef.current;
-    if (!map || !gridGroup) return;
-
-    gridGroup.clearLayers();
-    if (heatLayerRef.current) {
-      map.removeLayer(heatLayerRef.current);
-    }
-
-    const heatPoints = [];
-
-    gridData.forEach((cell) => {
-      const { bounds, severity, lst, mitigated, id, ward, lulc } = cell;
-
-      const lat = (bounds[0][0] + bounds[1][0]) / 2;
-      const lng = (bounds[0][1] + bounds[1][1]) / 2;
-      
-      // Calculate heat intensity 0.0 to 1.0 (Assume range 25 to 45 C)
-      let intensity = (lst - 25) / 20;
+  const [map, setMap] = useState(null);
+  const [hoveredCell, setHoveredCell] = useState(null);
+  
+  const heatPoints = useMemo(() => {
+    if (!isLoaded || !gridData) return [];
+    return gridData.map(cell => {
+      const lat = (cell.bounds[0][0] + cell.bounds[1][0]) / 2;
+      const lng = (cell.bounds[0][1] + cell.bounds[1][1]) / 2;
+      let intensity = (cell.lst - 25) / 20;
       if (intensity < 0) intensity = 0;
       if (intensity > 1) intensity = 1;
-      heatPoints.push([lat, lng, intensity]);
-
-      const isSelected = selectedCell && selectedCell.id === id;
-
-      // Color based on severity for tooltip/labels
-      let color = '#10b981'; // Low: Emerald-500
-      if (severity === 'Moderate') color = '#eab308'; // Moderate: Yellow-500
-      else if (severity === 'High') color = '#f97316'; // High: Orange-500
-      else if (severity === 'Severe') color = '#ef4444'; // Severe: Red-500
-
-      // Create Leaflet rectangle (Invisible mostly, just for clicking and hovering)
-      const rect = L.rectangle(bounds, {
-        color: isSelected ? '#38bdf8' : '#334155', // highlight selected with sky-400
-        weight: isSelected ? 3 : 0.4,
-        fillColor: 'transparent',
-        fillOpacity: 0,
-        dashArray: mitigated ? '4, 4' : null
-      });
-
-      // Simple HTML tooltip
-      rect.bindTooltip(
-        `<div style="font-family: Inter, sans-serif; color: #f8fafc; font-size: 11px; padding: 2px;">
-          <div style="font-weight: 700; border-bottom: 1px solid #475569; padding-bottom: 2px; margin-bottom: 4px;">Cell ${id}</div>
-          <strong>Ward:</strong> ${ward}<br/>
-          <strong>LST:</strong> ${lst.toFixed(1)}°C ${mitigated ? '<span style="color: #38bdf8;">(Mitigated)</span>' : ''}<br/>
-          <strong>NDVI:</strong> ${cell.ndvi.toFixed(2)}<br/>
-          <strong>LULC:</strong> ${lulc}<br/>
-          <strong>Severity:</strong> <span style="font-weight:700; color: ${color};">${severity}</span>
-        </div>`,
-        { sticky: true, className: 'custom-map-tooltip' }
-      );
-
-      rect.on('click', () => {
-        onSelectCell(cell);
-      });
-
-      gridGroup.addLayer(rect);
+      return {
+        location: new window.google.maps.LatLng(lat, lng),
+        weight: intensity
+      };
     });
+  }, [gridData, isLoaded]);
 
-    heatLayerRef.current = L.heatLayer(heatPoints, {
-      radius: 40,
-      blur: 25,
-      maxZoom: 12,
-      gradient: { 0.3: '#10b981', 0.5: '#eab308', 0.7: '#f97316', 1.0: '#ef4444' }
-    }).addTo(map);
+  const onLoad = React.useCallback(function callback(mapInstance) {
+    setMap(mapInstance);
+  }, []);
 
-  }, [gridData, selectedCell, onSelectCell]);
+  const onUnmount = React.useCallback(function callback() {
+    setMap(null);
+  }, []);
+
+  useEffect(() => {
+    if (map && cityCenter) {
+      map.panTo({ lat: cityCenter[0], lng: cityCenter[1] });
+    }
+  }, [cityCenter, map]);
+
+  if (!isLoaded) return <div className="w-full h-full min-h-[500px] flex items-center justify-center bg-slate-900 rounded-2xl border border-slate-800"><div className="text-sky-400 flex flex-col items-center gap-3"><RefreshCw className="animate-spin" size={32} /><span>Loading Google Maps Engine...</span></div></div>;
 
   return (
     <div className="relative w-full h-full min-h-[500px] overflow-hidden rounded-2xl group">
@@ -203,7 +164,85 @@ function LeafletMap({ cityCenter, gridData, selectedCell, onSelectCell }) {
         <div className="w-full h-[5px] bg-sky-400 absolute top-0 left-0 animate-radar-scan shadow-[0_0_20px_5px_rgba(56,189,248,0.7)]" />
       </div>
       
-      <div ref={mapRef} className="absolute inset-0 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl z-0" />
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={{ lat: cityCenter[0], lng: cityCenter[1] }}
+        zoom={12}
+        options={mapOptions}
+        onLoad={onLoad}
+        onUnmount={onUnmount}
+        onClick={(e) => onMapClick(e.latLng.lat(), e.latLng.lng())}
+      >
+        {heatPoints.length > 0 && (
+          <HeatmapLayer 
+            data={heatPoints} 
+            options={{
+              radius: 45,
+              opacity: 1,
+              gradient: [
+                'rgba(0, 255, 255, 0)',
+                'rgba(16, 185, 129, 1)', // emerald-500
+                'rgba(234, 179, 8, 1)', // yellow-500
+                'rgba(249, 115, 22, 1)', // orange-500
+                'rgba(239, 68, 68, 1)' // red-500
+              ]
+            }} 
+          />
+        )}
+
+        {gridData.map((cell) => {
+          const { bounds, id, severity, mitigated } = cell;
+          const isSelected = selectedCell && selectedCell.id === id;
+          
+          let color = '#10b981';
+          if (severity === 'Moderate') color = '#eab308';
+          else if (severity === 'High') color = '#f97316';
+          else if (severity === 'Severe') color = '#ef4444';
+
+          return (
+            <Rectangle
+              key={id}
+              bounds={{
+                north: bounds[1][0],
+                south: bounds[0][0],
+                east: bounds[1][1],
+                west: bounds[0][1]
+              }}
+              options={{
+                fillColor: 'transparent',
+                fillOpacity: 0,
+                strokeColor: isSelected ? '#38bdf8' : (hoveredCell === id ? color : '#334155'),
+                strokeOpacity: isSelected || hoveredCell === id ? 0.8 : 0.2,
+                strokeWeight: isSelected ? 3 : (hoveredCell === id ? 2 : 1),
+                clickable: true
+              }}
+              onClick={() => onSelectCell(cell)}
+              onMouseOver={() => setHoveredCell(id)}
+              onMouseOut={() => setHoveredCell(null)}
+            />
+          );
+        })}
+
+        {hoveredCell && gridData.find(c => c.id === hoveredCell) && (
+          <InfoWindow
+            position={{
+              lat: (gridData.find(c => c.id === hoveredCell).bounds[0][0] + gridData.find(c => c.id === hoveredCell).bounds[1][0]) / 2,
+              lng: (gridData.find(c => c.id === hoveredCell).bounds[0][1] + gridData.find(c => c.id === hoveredCell).bounds[1][1]) / 2
+            }}
+            options={{ disableAutoPan: true }}
+          >
+            <div style={{ color: '#0f172a', padding: '2px', fontFamily: 'Inter, sans-serif', fontSize: '11px', fontWeight: '500' }}>
+              <div style={{ fontWeight: 'bold', borderBottom: '1px solid #cbd5e1', paddingBottom: '4px', marginBottom: '4px' }}>
+                Cell {hoveredCell}
+              </div>
+              LST: {gridData.find(c => c.id === hoveredCell).lst.toFixed(1)}°C<br/>
+              NDVI: {gridData.find(c => c.id === hoveredCell).ndvi.toFixed(2)}<br/>
+              LULC: {gridData.find(c => c.id === hoveredCell).lulc}
+            </div>
+          </InfoWindow>
+        )}
+      </GoogleMap>
+
       {/* Visual map legend overlay */}
       <div className="absolute bottom-4 left-4 bg-slate-900/90 border border-slate-800/80 rounded-lg p-3 shadow-xl backdrop-blur-sm z-10 font-sans text-xs">
         <h4 className="font-semibold text-slate-200 mb-2 font-display">UHI Severity Index</h4>
@@ -491,6 +530,37 @@ export default function App() {
     }
     return CITY_COORDINATES[selectedCity] || CITY_COORDINATES.delhi;
   }, [selectedCity, customCenter]);
+
+  // Handle click on Google Map (Point and Scan)
+  const handleMapClick = async (lat, lng) => {
+    // 1. Instantly move the radar grid to the clicked location
+    setCustomCenter([lat, lng]);
+    setCustomCityName(`Point Scan (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+    setSelectedCity('custom');
+    setSelectedCell(null);
+    setDrawerVisible(false);
+
+    // 2. Fetch LIVE weather data from Open-Meteo satellite API
+    try {
+      message.loading({ content: 'Scanning live satellite feed...', key: 'liveWeather' });
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
+      const data = await res.json();
+      
+      if (data && data.current_weather) {
+        const temp = data.current_weather.temperature;
+        const wind = data.current_weather.windspeed;
+        message.success({ 
+          content: `Live Scan Complete! Actual Temp: ${temp}°C | Wind: ${wind} km/h`, 
+          key: 'liveWeather', 
+          duration: 5 
+        });
+      } else {
+        message.error({ content: 'Satellite data unavailable for this coordinate.', key: 'liveWeather' });
+      }
+    } catch (err) {
+      message.error({ content: 'Failed to contact Open-Meteo satellite feed.', key: 'liveWeather' });
+    }
+  };
 
   // Handle Google Maps Geocoding Search
   const handleSearch = async (query) => {
@@ -1114,11 +1184,12 @@ export default function App() {
                   
                   {/* Leaflet Component Wrapper */}
                   <div className="flex-1 w-full h-full relative">
-                    <LeafletMap 
+                    <GoogleMapComponent 
                       cityCenter={cityCenter} 
                       gridData={activeGridData} 
                       selectedCell={activeSelectedCell}
                       onSelectCell={handleSelectCell}
+                      onMapClick={handleMapClick}
                     />
                   </div>
                 </div>
