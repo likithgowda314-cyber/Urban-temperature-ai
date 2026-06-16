@@ -237,11 +237,11 @@ function LeafletMap({ cityCenter, gridData, selectedCell, onSelectCell }) {
 // Generate deterministic cell grids for Delhi, Bengaluru, and Ahmedabad
 const generateGridData = (cityCenter, cityKey) => {
   const [centerLat, centerLng] = cityCenter;
-  const cellSize = 0.011; // Creates reasonable size blocks for Leaflet
+  const cellSize = 0.0055; // Creates reasonable size blocks for Leaflet
   const data = [];
   
   const wards = {
-    delhi: ["Connaught Place", "Karol Bagh", "Dwarka", "Okhla", "Rohini", "Chandni Chowk", "Vasant Kunj", "Saket", "Mayur Vihar", "Rajouri Garden"],
+    delhi: ["Connaught Place", "Chanakyapuri", "Vasant Vihar", "Lajpat Nagar", "Karol Bagh", "Rohini", "Dwarka", "Okhla", "Shahdara", "Saket"],
     bengaluru: ["Indiranagar", "Koramangala", "Whitefield", "Jayanagar", "Malleshwaram", "Yelahanka", "HSR Layout", "Electronic City", "Marathahalli", "BTM Layout"],
     ahmedabad: ["Kalupur", "Satellite", "Navrangpura", "Maninagar", "Vastrapur", "Sabarmati", "Ghatlodia", "Bapunagar", "Paldi", "Asarwa"]
   };
@@ -249,13 +249,13 @@ const generateGridData = (cityCenter, cityKey) => {
   const currentWards = wards[cityKey] || wards.delhi;
   const lulcs = ["Commercial", "Residential High-Density", "Industrial Area", "Urban Forest", "Water Body", "Open Soil"];
 
-  for (let r = 0; r < 10; r++) {
-    for (let c = 0; c < 10; c++) {
+  for (let r = 0; r < 20; r++) {
+    for (let c = 0; c < 20; c++) {
       const id = `${cityKey.toUpperCase().substring(0, 2)}-R${r}-C${c}`;
       
-      const minLat = centerLat + (r - 5) * cellSize;
+      const minLat = centerLat + (r - 10) * cellSize;
       const maxLat = minLat + cellSize;
-      const minLng = centerLng + (c - 5) * cellSize;
+      const minLng = centerLng + (c - 10) * cellSize;
       const maxLng = minLng + cellSize;
       const bounds = [[minLat, minLng], [maxLat, maxLng]];
 
@@ -1004,7 +1004,7 @@ export default function App() {
                   title={<span className="text-xs text-slate-400 font-sans">Active Hotspots</span>}
                   value={kpis.criticalCount}
                   styles={{ content: { color: kpis.criticalCount > 15 ? '#ef4444' : '#f97316', fontSize: '18px', fontWeight: 700 } }}
-                  suffix={<span className="text-xs text-slate-400 font-normal"> / 100</span>}
+                  suffix={<span className="text-xs text-slate-400 font-normal"> / 400</span>}
                 />
               </Card>
             </Col>
@@ -1036,7 +1036,7 @@ export default function App() {
                     <div className="flex items-center gap-2">
                       <Layers className="text-sky-400 w-4 h-4" />
                       <span className="font-semibold text-slate-200 text-sm font-display">
-                        Interactive Thermal Grid Workspace (100 Zones)
+                        Interactive Thermal Grid Workspace (400 Zones)
                       </span>
                     </div>
                     {kpis.mitigatedZonesCount > 0 && (
@@ -1211,7 +1211,7 @@ export default function App() {
                   {/* Summary of active city totals */}
                   <div className="border-t border-slate-800/80 pt-3 mt-4 text-[11px] text-slate-400 flex justify-between font-mono">
                     <span>Active Cell: {selectedCell ? selectedCell.id : 'N/A'}</span>
-                    <span>Total Blocks: 100</span>
+                    <span>Total Blocks: 400</span>
                   </div>
                 </div>
 
@@ -1331,7 +1331,7 @@ export default function App() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-xs text-slate-400 font-mono">Zones Monitored</span>
-                      <div className="text-xl font-bold font-display text-slate-200 mt-1">100 Blocks</div>
+                      <div className="text-xl font-bold font-display text-slate-200 mt-1">400 Blocks</div>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
                       <Layers size={18} />
@@ -1470,7 +1470,7 @@ export default function App() {
                       Grid Severity Share
                     </h3>
                     <span className="text-[11px] text-slate-400 block mb-3">
-                      Distribution of 100 grid cells across UHI thermal levels
+                      Distribution of 400 grid cells across UHI thermal levels
                     </span>
                   </div>
 
@@ -1499,7 +1499,7 @@ export default function App() {
 
                     {/* Centered Total Indicator */}
                     <div className="absolute flex flex-col justify-center items-center text-center">
-                      <span className="text-xl font-bold text-slate-200">100</span>
+                      <span className="text-xl font-bold text-slate-200">400</span>
                       <span className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Total Blocks</span>
                     </div>
                   </div>
@@ -1644,7 +1644,7 @@ export default function App() {
                     {pipelineState === 'success' && (
                       <div className="text-emerald-500 font-bold border-t border-emerald-950 pt-2 mt-4 flex items-center gap-2">
                         <CheckCircle2 size={16} />
-                        <span>[PIPELINE OK] Ingestion success. 100 cells re-mapped successfully.</span>
+                        <span>[PIPELINE OK] Ingestion success. 400 cells re-mapped successfully.</span>
                       </div>
                     )}
                   </div>
