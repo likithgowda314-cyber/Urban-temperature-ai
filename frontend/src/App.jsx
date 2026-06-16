@@ -13,7 +13,9 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip as ChartTooltip, Legend, Line, ComposedChart, PieChart, Pie, Cell
 } from 'recharts';
-import { GoogleMap, useJsApiLoader, HeatmapLayer, Rectangle, InfoWindow, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Rectangle, InfoWindow, Marker } from '@react-google-maps/api';
+import { GoogleMapsOverlay } from '@deck.gl/google-maps';
+import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 
 const { Header, Content, Sider } = Layout;
 
@@ -126,8 +128,11 @@ function GoogleMapComponent({ cityCenter, gridData, selectedCell, onSelectCell, 
   const [map, setMap] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
   
+  // Create deck.gl overlay reference
+  const overlayRef = useRef(null);
+  
   const heatPoints = useMemo(() => {
-    if (!isLoaded || !gridData) return [];
+    if (!gridData) return [];
     return gridData.map(cell => {
       const lat = (cell.bounds[0][0] + cell.bounds[1][0]) / 2;
       const lng = (cell.bounds[0][1] + cell.bounds[1][1]) / 2;
@@ -135,11 +140,51 @@ function GoogleMapComponent({ cityCenter, gridData, selectedCell, onSelectCell, 
       if (intensity < 0) intensity = 0;
       if (intensity > 1) intensity = 1;
       return {
-        location: new window.google.maps.LatLng(lat, lng),
+        coordinates: [lng, lat], // deck.gl uses [lng, lat]
         weight: intensity
       };
     });
-  }, [gridData, isLoaded]);
+  }, [gridData]);
+
+  // Update or initialize deck.gl overlay
+  useEffect(() => {
+    if (!map) return;
+
+    const heatmapLayer = new HeatmapLayer({
+      id: 'thermal-heatmap',
+      data: heatPoints,
+      getPosition: d => d.coordinates,
+      getWeight: d => d.weight,
+      radiusPixels: 80,
+      intensity: 1.5,
+      threshold: 0.05,
+      colorRange: [
+        [0, 255, 255, 0],
+        [16, 185, 129, 255], // emerald-500
+        [234, 179, 8, 255],  // yellow-500
+        [249, 115, 22, 255], // orange-500
+        [239, 68, 68, 255]   // red-500
+      ]
+    });
+
+    if (!overlayRef.current) {
+      overlayRef.current = new GoogleMapsOverlay({
+        layers: [heatmapLayer]
+      });
+      overlayRef.current.setMap(map);
+    } else {
+      overlayRef.current.setProps({
+        layers: [heatmapLayer]
+      });
+    }
+
+    return () => {
+      if (overlayRef.current) {
+        overlayRef.current.setMap(null);
+        overlayRef.current = null;
+      }
+    };
+  }, [map, heatPoints]);
 
   const onLoad = React.useCallback(function callback(mapInstance) {
     setMap(mapInstance);
@@ -173,23 +218,6 @@ function GoogleMapComponent({ cityCenter, gridData, selectedCell, onSelectCell, 
         onUnmount={onUnmount}
         onClick={(e) => onMapClick(e.latLng.lat(), e.latLng.lng())}
       >
-        {heatPoints.length > 0 && (
-          <HeatmapLayer 
-            data={heatPoints} 
-            options={{
-              radius: 45,
-              opacity: 1,
-              gradient: [
-                'rgba(0, 255, 255, 0)',
-                'rgba(16, 185, 129, 1)', // emerald-500
-                'rgba(234, 179, 8, 1)', // yellow-500
-                'rgba(249, 115, 22, 1)', // orange-500
-                'rgba(239, 68, 68, 1)' // red-500
-              ]
-            }} 
-          />
-        )}
-
         {gridData.map((cell) => {
           const { bounds, id, severity, mitigated } = cell;
           const isSelected = selectedCell && selectedCell.id === id;
