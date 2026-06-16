@@ -1,46 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-display: "Outfit", system-ui, sans-serif;
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #050B14;
 }
 
-/* Base styles and overrides */
-@layer base {
-  body {
-    @apply bg-slate-950 text-slate-100 font-sans antialiased;
-    margin: 0;
-    padding: 0;
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+  /* Deep animated background */
+  background: radial-gradient(circle at 15% 50%, rgba(14, 165, 233, 0.08), transparent 25%),
+              radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+  background-color: #050B14;
+  background-attachment: fixed;
+}
+
+#root {
+  width: 100%;
+}
+
+/* Glassmorphism Utilities */
+@layer utilities {
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-md border border-slate-700/50 shadow-xl;
   }
   
-  /* Reset default root alignment to allow full height dashboards */
-  #root {
-    width: 100vw;
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    border-inline: none;
-    text-align: left;
-    background-color: #020617; /* slate-950 */
+  .glass-panel-hover {
+    @apply transition-all duration-300 hover:bg-slate-900/60 hover:border-sky-500/30 hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-1;
   }
 }
 
-/* Ant Design Component custom overrides to blend with dark space-tech theme */
+/* Antd Overrides for Dark/Glass theme */
 .ant-layout {
-  background: #020617 !important;
-}
-
-.ant-layout-sider {
-  background: #090d16 !important;
-  border-right: 1px solid #1e293b;
+  background: transparent !important;
 }
 
 .ant-menu {
   background: transparent !important;
+  border-inline-end: none !important;
 }
 
 .ant-menu-item {
@@ -48,13 +53,60 @@
 }
 
 .ant-menu-item-selected {
-  background-color: rgba(30, 41, 59, 0.5) !important;
-  color: #38bdf8 !important; /* sky-400 */
+  background-color: rgba(56, 189, 248, 0.1) !important;
+  color: #38bdf8 !important;
 }
 
-/* Add padding to inputs for clean UI */
-.ant-input, .ant-input-number, .ant-select-selector {
-  @apply py-1.5;
+.ant-card {
+  background: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(8px) !important;
+  border-color: rgba(51, 65, 85, 0.5) !important;
+  color: #f8fafc !important;
+}
+
+.ant-table, .ant-table-wrapper {
+  background: transparent !important;
+}
+.ant-table-cell {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5) !important;
+}
+
+.ant-table-thead > tr > th {
+  background: rgba(15, 23, 42, 0.8) !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5) !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: rgba(51, 65, 85, 0.3) !important;
+}
+
+.ant-select-selector {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(51, 65, 85, 0.8) !important;
+  color: #e2e8f0 !important;
+}
+
+.ant-select-arrow {
+  color: #94a3b8 !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.8);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 1);
 }
 
 @keyframes radar-scan {
@@ -63,41 +115,7 @@
   90% { opacity: 1; }
   100% { transform: translateY(500px); opacity: 0; }
 }
+
 .animate-radar-scan {
-  animation: radar-scan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: radar-scan 3s linear infinite;
 }
-
-/* Custom scrollbars for a premium dark feel */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #020617;
-}
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-  padding: 6px 10px !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
-}
-.custom-map-tooltip::before {
-  border-right-color: #0f172a !important;
-  border-left-color: #0f172a !important;
-}
-
-/* Map cell temperature label styles */
-.cell-temp-label div {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  color: #0f172a;
-  text-align: center;
-  text-shadow: 0px 0px 3px rgba(255, 255, 255, 0.95), 0px 0px 5px rgba(255, 255, 255, 0.95);
-  pointer-events: none;
-  user-select: none;
-}
-
