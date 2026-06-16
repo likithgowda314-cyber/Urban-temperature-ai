@@ -55,6 +55,21 @@
   color: #38bdf8 !important; /* sky-400 */
 }
 
+/* Add padding to inputs for clean UI */
+.ant-input, .ant-input-number, .ant-select-selector {
+  @apply py-1.5;
+}
+
+@keyframes radar-scan {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(500px); opacity: 0; }
+}
+.animate-radar-scan {
+  animation: radar-scan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 /* Custom scrollbars for a premium dark feel */
 ::-webkit-scrollbar {
   width: 6px;

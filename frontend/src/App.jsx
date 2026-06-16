@@ -14,6 +14,7 @@ import {
   Tooltip as ChartTooltip, Legend, Line, ComposedChart, PieChart, Pie, Cell
 } from 'recharts';
 import L from 'leaflet';
+import 'leaflet.heat';
 
 const { Header, Content, Sider } = Layout;
 
@@ -84,6 +85,8 @@ function LeafletMap({ cityCenter, gridData, selectedCell, onSelectCell }) {
   const mapInstanceRef = useRef(null);
   const gridGroupRef = useRef(null);
 
+  const heatLayerRef = useRef(null);
+
   // Initialize Map and Layer Group
   useEffect(() => {
     if (!mapRef.current) return;
@@ -96,8 +99,8 @@ function LeafletMap({ cityCenter, gridData, selectedCell, onSelectCell }) {
       attributionControl: true,
     });
 
-    // Add Premium Light basemap from CartoDB
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // Add Premium Dark basemap from CartoDB
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 20
@@ -118,6 +121,7 @@ function LeafletMap({ cityCenter, gridData, selectedCell, onSelectCell }) {
         mapInstanceRef.current = null;
       }
       gridGroupRef.current = null;
+      heatLayerRef.current = null;
     };
   }, [cityCenter]);
 
@@ -128,24 +132,38 @@ function LeafletMap({ cityCenter, gridData, selectedCell, onSelectCell }) {
     if (!map || !gridGroup) return;
 
     gridGroup.clearLayers();
+    if (heatLayerRef.current) {
+      map.removeLayer(heatLayerRef.current);
+    }
+
+    const heatPoints = [];
 
     gridData.forEach((cell) => {
       const { bounds, severity, lst, mitigated, id, ward, lulc } = cell;
 
-      // Color based on severity
+      const lat = (bounds[0][0] + bounds[1][0]) / 2;
+      const lng = (bounds[0][1] + bounds[1][1]) / 2;
+      
+      // Calculate heat intensity 0.0 to 1.0 (Assume range 25 to 45 C)
+      let intensity = (lst - 25) / 20;
+      if (intensity < 0) intensity = 0;
+      if (intensity > 1) intensity = 1;
+      heatPoints.push([lat, lng, intensity]);
+
+      const isSelected = selectedCell && selectedCell.id === id;
+
+      // Color based on severity for tooltip/labels
       let color = '#10b981'; // Low: Emerald-500
       if (severity === 'Moderate') color = '#eab308'; // Moderate: Yellow-500
       else if (severity === 'High') color = '#f97316'; // High: Orange-500
       else if (severity === 'Severe') color = '#ef4444'; // Severe: Red-500
 
-      const isSelected = selectedCell && selectedCell.id === id;
-
-      // Create Leaflet rectangle
+      // Create Leaflet rectangle (Invisible mostly, just for clicking and hovering)
       const rect = L.rectangle(bounds, {
-        color: isSelected ? '#38bdf8' : '#334155', // highlight selected with sky-400, else slate-700
-        weight: isSelected ? 3 : 0.8,
-        fillColor: color,
-        fillOpacity: mitigated ? 0.12 : (severity === 'Severe' ? 0.55 : (severity === 'High' ? 0.40 : (severity === 'Moderate' ? 0.25 : 0.12))),
+        color: isSelected ? '#38bdf8' : '#334155', // highlight selected with sky-400
+        weight: isSelected ? 3 : 0.4,
+        fillColor: 'transparent',
+        fillOpacity: 0,
         dashArray: mitigated ? '4, 4' : null
       });
 
@@ -167,28 +185,24 @@ function LeafletMap({ cityCenter, gridData, selectedCell, onSelectCell }) {
       });
 
       gridGroup.addLayer(rect);
-
-      // Add temperature text label in the center of the cell
-      const center = [
-        (bounds[0][0] + bounds[1][0]) / 2,
-        (bounds[0][1] + bounds[1][1]) / 2
-      ];
-      const tempLabel = L.marker(center, {
-        icon: L.divIcon({
-          className: 'cell-temp-label',
-          html: `<div>${lst.toFixed(1)}°</div>`,
-          iconSize: [40, 20],
-          iconAnchor: [20, 10]
-        }),
-        interactive: false
-      });
-      gridGroup.addLayer(tempLabel);
     });
+
+    heatLayerRef.current = L.heatLayer(heatPoints, {
+      radius: 40,
+      blur: 25,
+      maxZoom: 12,
+      gradient: { 0.3: '#10b981', 0.5: '#eab308', 0.7: '#f97316', 1.0: '#ef4444' }
+    }).addTo(map);
 
   }, [gridData, selectedCell, onSelectCell]);
 
   return (
-    <div className="relative w-full h-full min-h-[500px]">
+    <div className="relative w-full h-full min-h-[500px] overflow-hidden rounded-2xl group">
+      {/* Radar scanning animation layer */}
+      <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden opacity-30 rounded-2xl">
+        <div className="w-full h-[5px] bg-sky-400 absolute top-0 left-0 animate-radar-scan shadow-[0_0_20px_5px_rgba(56,189,248,0.7)]" />
+      </div>
+      
       <div ref={mapRef} className="absolute inset-0 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl z-0" />
       {/* Visual map legend overlay */}
       <div className="absolute bottom-4 left-4 bg-slate-900/90 border border-slate-800/80 rounded-lg p-3 shadow-xl backdrop-blur-sm z-10 font-sans text-xs">
