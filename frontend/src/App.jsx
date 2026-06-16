@@ -243,7 +243,8 @@ const generateGridData = (cityCenter, cityKey) => {
   const wards = {
     delhi: ["Connaught Place", "Chanakyapuri", "Vasant Vihar", "Lajpat Nagar", "Karol Bagh", "Rohini", "Dwarka", "Okhla", "Shahdara", "Saket"],
     bengaluru: ["Indiranagar", "Koramangala", "Whitefield", "Jayanagar", "Malleshwaram", "Yelahanka", "HSR Layout", "Electronic City", "Marathahalli", "BTM Layout"],
-    ahmedabad: ["Kalupur", "Satellite", "Navrangpura", "Maninagar", "Vastrapur", "Sabarmati", "Ghatlodia", "Bapunagar", "Paldi", "Asarwa"]
+    ahmedabad: ["Kalupur", "Satellite", "Navrangpura", "Maninagar", "Vastrapur", "Sabarmati", "Ghatlodia", "Bapunagar", "Paldi", "Asarwa"],
+    custom: ["North District", "Central Business District", "South District", "East Zone", "West Zone", "Uptown", "Downtown", "Industrial Park", "Suburbs", "Riverside"]
   };
 
   const currentWards = wards[cityKey] || wards.delhi;
@@ -366,6 +367,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('map');
   const [selectedCity, setSelectedCity] = useState('delhi');
   
+  // Custom Google Maps Geocoding State
+  const [customCenter, setCustomCenter] = useState(null);
+  const [customCityName, setCustomCityName] = useState("");
+  const [searchOptions, setSearchOptions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  
   // Grids state
   const [grids, setGrids] = useState({
     delhi: [],
@@ -459,8 +466,11 @@ export default function App() {
 
   // Sync state selection of active grid
   const activeGridData = useMemo(() => {
+    if (selectedCity === 'custom' && customCenter) {
+      return generateGridData(customCenter, "custom");
+    }
     return grids[selectedCity] || [];
-  }, [grids, selectedCity]);
+  }, [grids, selectedCity, customCenter]);
 
   // Sync drawer cell object ref when grids change
   const activeSelectedCell = useMemo(() => {
@@ -476,8 +486,41 @@ export default function App() {
 
   // City center position
   const cityCenter = useMemo(() => {
+    if (selectedCity === 'custom' && customCenter) {
+      return customCenter;
+    }
     return CITY_COORDINATES[selectedCity] || CITY_COORDINATES.delhi;
-  }, [selectedCity]);
+  }, [selectedCity, customCenter]);
+
+  // Handle Google Maps Geocoding Search
+  const handleSearch = async (query) => {
+    if (!query || query.length < 3) {
+      setSearchOptions([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`);
+      const data = await res.json();
+      
+      if (data.status === 'OK') {
+        const opts = data.results.map(result => ({
+          value: JSON.stringify({
+            lat: result.geometry.location.lat,
+            lng: result.geometry.location.lng,
+            name: result.formatted_address
+          }),
+          label: result.formatted_address
+        }));
+        setSearchOptions(opts);
+      }
+    } catch (err) {
+      console.error("Google Geocoding failed:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   // Filtered hotspots/locations for Intervention Planner
   const plannerHotspots = useMemo(() => {
@@ -922,25 +965,48 @@ export default function App() {
             {/* City Selector Dropdown */}
             <div className="px-4 py-4 border-b border-slate-800/60">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest pl-1 block mb-1.5 font-bold">
-                Monitoring Area
+                Monitoring Area (Google Maps Search)
               </span>
               <Select
-                value={selectedCity}
+                showSearch
+                placeholder="Search any global city..."
+                value={selectedCity === 'custom' ? customCityName : selectedCity}
+                defaultActiveFirstOption={false}
+                suffixIcon={null}
+                filterOption={false}
+                onSearch={handleSearch}
+                notFoundContent={isSearching ? "Searching Google Maps..." : null}
                 onChange={(val) => {
-                  setSelectedCity(val);
-                  setSelectedCell(null);
-                  setDrawerVisible(false);
-                  message.info(`Workspace focused on ${CITY_NAMES[val]}`);
+                  try {
+                    // Try parsing JSON if it's a custom Google Maps result
+                    const parsed = JSON.parse(val);
+                    setCustomCenter([parsed.lat, parsed.lng]);
+                    setCustomCityName(parsed.name);
+                    setSelectedCity('custom');
+                    setSelectedCell(null);
+                    setDrawerVisible(false);
+                    message.success(`Workspace focused on ${parsed.name}`);
+                  } catch (e) {
+                    // It's a hardcoded city
+                    setSelectedCity(val);
+                    setCustomCenter(null);
+                    setCustomCityName("");
+                    setSelectedCell(null);
+                    setDrawerVisible(false);
+                    message.info(`Workspace focused on ${CITY_NAMES[val]}`);
+                  }
                 }}
                 className="w-full custom-city-select"
                 options={[
+                  // Hardcoded fallbacks
                   { value: 'delhi', label: `Delhi NCT (${cityAverages.delhi}°C)` },
                   { value: 'bengaluru', label: `Bengaluru (${cityAverages.bengaluru}°C)` },
-                  { value: 'ahmedabad', label: `Ahmedabad (${cityAverages.ahmedabad}°C)` }
+                  { value: 'ahmedabad', label: `Ahmedabad (${cityAverages.ahmedabad}°C)` },
+                  ...searchOptions
                 ]}
               />
               <p className="text-[11px] text-slate-400 mt-2 pl-1 leading-relaxed">
-                {CITY_DESCRIPTIONS[selectedCity]}
+                {selectedCity === 'custom' ? `Monitoring custom global coordinates via Google Maps API.` : CITY_DESCRIPTIONS[selectedCity]}
               </p>
             </div>
 
