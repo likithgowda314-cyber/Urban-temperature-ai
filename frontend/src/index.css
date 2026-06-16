@@ -119,3 +119,38 @@ body {
 .animate-radar-scan {
   animation: radar-scan 3s linear infinite;
 }
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom Search Bar */
+.custom-map-search .ant-select-selector {
+  background: rgba(15, 23, 42, 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  border-radius: 9999px !important;
+  padding-left: 20px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.custom-map-search .ant-select-selection-search-input {
+  height: 44px !important;
+}
+
+.custom-map-search .ant-select-selection-placeholder {
+  color: #94a3b8 !important;
+  line-height: 44px !important;
+}
+
+.custom-map-search.ant-select-focused .ant-select-selector {
+  border-color: rgba(56, 189, 248, 0.8) !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2) !important;
+}

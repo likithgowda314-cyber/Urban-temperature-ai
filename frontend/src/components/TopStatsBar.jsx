@@ -10,8 +10,8 @@ export default function TopStatsBar({ cityName, kpis }) {
     <Header className="glass-panel border-b border-slate-700/50 h-auto py-5 px-8 flex flex-wrap justify-between items-center gap-6 shadow-md z-10 relative">
       <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-sky-500/50 to-transparent"></div>
       
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-        <h1 className="text-2xl font-bold font-display text-slate-100 m-0 flex items-center gap-4">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex-shrink-0">
+        <h1 className="text-xl lg:text-2xl font-bold font-display text-slate-100 m-0 flex items-center gap-4">
           {cityName} Command Console
           <Tag color="red" className="animate-pulse border-red-500/30 bg-red-500/10 text-red-400 m-0 px-3 py-1 rounded-full flex items-center shadow-[0_0_10px_rgba(239,68,68,0.2)]">
             <AlertTriangle size={14} className="mr-1.5" />
@@ -23,12 +23,12 @@ export default function TopStatsBar({ cityName, kpis }) {
         </span>
       </motion.div>
       
-      <Row gutter={20} className="flex-1 max-w-[700px] justify-end">
-        <Col xs={12} sm={8} md={8}>
-          <Card size="small" className="glass-panel glass-panel-hover overflow-hidden relative border-none">
+      <Row gutter={16} className="flex-1 max-w-[700px] justify-end flex-nowrap overflow-x-auto overflow-y-hidden pb-1 lg:pb-0 hide-scrollbar">
+        <Col>
+          <Card size="small" className="glass-panel glass-panel-hover overflow-hidden relative border-none min-w-[140px]">
             <div className="absolute top-0 right-0 w-16 h-16 bg-orange-500/10 rounded-full blur-xl"></div>
             <Statistic
-              title={<span className="text-xs text-slate-400 font-sans tracking-wider uppercase font-semibold">Avg City LST</span>}
+              title={<span className="text-xs text-slate-400 font-sans tracking-wider uppercase font-semibold whitespace-nowrap">Avg City LST</span>}
               value={kpis.avgLst}
               precision={1}
               suffix="°C"
@@ -36,22 +36,22 @@ export default function TopStatsBar({ cityName, kpis }) {
             />
           </Card>
         </Col>
-        <Col xs={12} sm={8} md={8}>
-          <Card size="small" className="glass-panel glass-panel-hover overflow-hidden relative border-none">
+        <Col>
+          <Card size="small" className="glass-panel glass-panel-hover overflow-hidden relative border-none min-w-[140px]">
             <div className="absolute top-0 right-0 w-16 h-16 bg-red-500/10 rounded-full blur-xl"></div>
             <Statistic
-              title={<span className="text-xs text-slate-400 font-sans tracking-wider uppercase font-semibold">Active Hotspots</span>}
+              title={<span className="text-xs text-slate-400 font-sans tracking-wider uppercase font-semibold whitespace-nowrap">Active Hotspots</span>}
               value={kpis.criticalCount}
               styles={{ content: { color: kpis.criticalCount > 15 ? '#ef4444' : '#f97316', fontSize: '22px', fontWeight: 700 } }}
               suffix={<span className="text-xs text-slate-500 font-normal ml-1">/ 400</span>}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={8} md={8}>
-          <Card size="small" className="glass-panel glass-panel-hover overflow-hidden relative border-none">
+        <Col>
+          <Card size="small" className="glass-panel glass-panel-hover overflow-hidden relative border-none min-w-[140px]">
             <div className="absolute top-0 right-0 w-16 h-16 bg-sky-500/10 rounded-full blur-xl"></div>
             <Statistic
-              title={<span className="text-xs text-slate-400 font-sans tracking-wider uppercase font-semibold">Simulated Cooling</span>}
+              title={<span className="text-xs text-slate-400 font-sans tracking-wider uppercase font-semibold whitespace-nowrap">Simulated Cooling</span>}
               value={kpis.projectionTarget}
               precision={2}
               styles={{ content: { color: '#38bdf8', fontSize: '22px', fontWeight: 700 } }}

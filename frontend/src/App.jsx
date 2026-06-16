@@ -303,6 +303,16 @@ export default function App() {
               selectedCell={selectedCell}
               handleDeploySimulation={handleDeploySimulation}
               handleResetSimulation={handleResetSimulation}
+              searchOptions={searchOptions}
+              isSearching={isSearching}
+              handleSearch={handleSearch}
+              selectedCity={selectedCity}
+              customCityName={customCityName}
+              setSelectedCity={setSelectedCity}
+              setCustomCenter={setCustomCenter}
+              setCustomCityName={setCustomCityName}
+              setSelectedCell={setSelectedCell}
+              setDrawerVisible={setDrawerVisible}
             />
           )}
 
