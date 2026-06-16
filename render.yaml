@@ -1,0 +1,22 @@
+services:
+  # 1. Flask Web Service Backend
+  - type: web
+    name: ai-platform-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt && pip install gunicorn
+    startCommand: cd backend && gunicorn main:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.5
+      - key: DATABASE_URL
+        value: sqlite:///./ai_platform.db
+
+  # 2. React Vite Static Site Frontend
+  - type: web
+    name: ai-platform-frontend
+    env: static
+    buildCommand: npm install --prefix frontend && npm run build --prefix frontend
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://ai-platform-backend.onrender.com # Point this to your actual Render backend URL after creating the service

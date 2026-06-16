@@ -1,0 +1,27 @@
+{
+  "case_number": "WP 12345/2024",
+  "date": "2024-11-20",
+  "petitioner": "M/s ABC Industries Pvt Ltd",
+  "respondent": "Department of Revenue, Karnataka",
+  "directions": [
+    "Pay compensation of Rs 5 lakhs within 30 days",
+    "File compliance report before the next date"
+  ],
+  "deadline": "2024-12-20",
+  "department": "Revenue Department",
+  "confidence": {
+    "case_number": "high",
+    "date": "high",
+    "directions": "medium",
+    "deadline": "low"
+  },
+  "sources": {
+    "case_number": "Page 1, Header",
+    "date": "Page 1, Paragraph 1",
+    "petitioner": "Page 1, Paragraph 2",
+    "respondent": "Page 1, Paragraph 2",
+    "directions": "Page 3, Section 4.1",
+    "deadline": "Page 3, Section 4.2",
+    "department": "Page 2, Paragraph 1"
+  }
+}
