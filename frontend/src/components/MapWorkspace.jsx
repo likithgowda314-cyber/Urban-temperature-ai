@@ -6,6 +6,7 @@ import HotspotDetails from './HotspotDetails';
 
 export default function MapWorkspace({
   cityCenter,
+  cityName,
   activeGridData,
   activeSelectedCell,
   handleSelectCell,
@@ -85,6 +86,7 @@ export default function MapWorkspace({
         <div className="flex-1 w-full h-full relative z-10">
           <GoogleMapComponent 
             cityCenter={cityCenter} 
+            cityName={cityName}
             gridData={activeGridData} 
             selectedCell={activeSelectedCell}
             onSelectCell={handleSelectCell}

@@ -295,6 +295,7 @@ export default function App() {
           {activeTab === 'map' && (
             <MapWorkspace 
               cityCenter={cityCenter}
+              cityName={currentCityName}
               activeGridData={activeGridData}
               activeSelectedCell={activeSelectedCell}
               handleSelectCell={handleSelectCell}

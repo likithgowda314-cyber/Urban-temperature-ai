@@ -40,7 +40,7 @@ const mapOptions = {
   ]
 };
 
-export default function GoogleMapComponent({ cityCenter, gridData, selectedCell, onSelectCell, onMapClick }) {
+export default function GoogleMapComponent({ cityCenter, cityName, gridData, selectedCell, onSelectCell, onMapClick }) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -180,13 +180,14 @@ export default function GoogleMapComponent({ cityCenter, gridData, selectedCell,
             }}
             options={{ disableAutoPan: true }}
           >
-            <div style={{ color: '#f8fafc', background: 'rgba(15, 23, 42, 0.9)', padding: '6px', borderRadius: '4px', fontFamily: 'Inter, sans-serif', fontSize: '11px', fontWeight: '500', minWidth: '120px' }}>
-              <div style={{ fontWeight: 'bold', borderBottom: '1px solid rgba(148, 163, 184, 0.2)', paddingBottom: '4px', marginBottom: '4px', color: '#38bdf8' }}>
-                Zone {hoveredCell}
+            <div className="custom-map-popup" style={{ color: '#f8fafc', background: 'rgba(15, 23, 42, 0.9)', padding: '12px', borderRadius: '8px', fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: '500', minWidth: '150px' }}>
+              <div style={{ fontWeight: 'bold', borderBottom: '1px solid rgba(148, 163, 184, 0.2)', paddingBottom: '6px', marginBottom: '8px' }}>
+                <span style={{ color: '#38bdf8', fontSize: '14px', display: 'block' }}>Zone {hoveredCell}</span>
+                <span style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{cityName}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>LST:</span> <span>{gridData.find(c => c.id === hoveredCell).lst.toFixed(1)}°C</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>NDVI:</span> <span>{gridData.find(c => c.id === hoveredCell).ndvi.toFixed(2)}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>LULC:</span> <span>{gridData.find(c => c.id === hoveredCell).lulc}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#94a3b8' }}>LST:</span> <span style={{ color: '#f97316', fontWeight: 'bold' }}>{gridData.find(c => c.id === hoveredCell).lst.toFixed(1)}°C</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#94a3b8' }}>NDVI:</span> <span style={{ color: '#10b981', fontWeight: 'bold' }}>{gridData.find(c => c.id === hoveredCell).ndvi.toFixed(2)}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>LULC:</span> <span style={{ color: '#cbd5e1' }}>{gridData.find(c => c.id === hoveredCell).lulc}</span></div>
             </div>
           </InfoWindow>
         )}
