@@ -10,20 +10,21 @@ export default function TopStatsBar({ cityName, kpis }) {
     <Header className="glass-panel border-b border-slate-700/50 h-auto py-5 px-8 flex flex-wrap justify-between items-center gap-6 shadow-md z-10 relative">
       <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-sky-500/50 to-transparent"></div>
       
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex-shrink-0">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex-1 min-w-0 pr-4">
         <h1 className="text-xl lg:text-2xl font-bold font-display text-slate-100 m-0 flex items-center gap-4">
-          {cityName} Command Console
-          <Tag color="red" className="animate-pulse border-red-500/30 bg-red-500/10 text-red-400 m-0 px-3 py-1 rounded-full flex items-center shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+          <span className="truncate" title={`${cityName} Command Console`}>{cityName} Command Console</span>
+          <Tag color="red" className="flex-shrink-0 animate-pulse border-red-500/30 bg-red-500/10 text-red-400 m-0 px-3 py-1 rounded-full flex items-center shadow-[0_0_10px_rgba(239,68,68,0.2)]">
             <AlertTriangle size={14} className="mr-1.5" />
-            Heatwave Warning
+            <span className="hidden sm:inline">Heatwave Warning</span>
+            <span className="sm:hidden">Warning</span>
           </Tag>
         </h1>
-        <span className="text-sm text-slate-400 font-medium tracking-wide">
+        <span className="text-sm text-slate-400 font-medium tracking-wide truncate block">
           Satellite LST & NDVI Heat Mitigation Engine
         </span>
       </motion.div>
       
-      <Row gutter={16} className="flex-1 max-w-[700px] justify-end flex-nowrap overflow-x-auto overflow-y-hidden pb-1 lg:pb-0 hide-scrollbar">
+      <Row gutter={16} className="w-auto justify-end flex-nowrap overflow-x-auto overflow-y-hidden pb-1 lg:pb-0 hide-scrollbar flex-shrink-0">
         <Col>
           <Card size="small" className="glass-panel glass-panel-hover overflow-hidden relative border-none min-w-[140px]">
             <div className="absolute top-0 right-0 w-16 h-16 bg-orange-500/10 rounded-full blur-xl"></div>
