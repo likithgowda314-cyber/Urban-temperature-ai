@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Layout, Menu, Select, Table, Card, Row, Col, Statistic, Progress, 
   Steps, Timeline, Button, Drawer, Tag, Slider, InputNumber, Badge, Alert, 
@@ -895,8 +896,8 @@ export default function App() {
                 <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-400/30 flex items-center justify-center">
                   <Thermometer className="text-sky-400 w-5 h-5 animate-pulse" />
                 </div>
-                <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-sky-400 via-teal-400 to-indigo-400 bg-clip-text text-transparent font-display">
-                  ai-platform AI
+                <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent font-display">
+                  UrbanTemp AI
                 </span>
               </div>
               <span className="text-[10px] text-slate-400 tracking-wider font-semibold uppercase font-mono pl-1">
@@ -959,15 +960,18 @@ export default function App() {
         
         {/* Top Header Metrics KPI Bar */}
         <Header className="bg-slate-900/40 border-b border-slate-800 h-auto py-4 px-6 flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <h1 className="text-xl font-bold font-display text-slate-100 m-0">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+            <h1 className="text-xl font-bold font-display text-slate-100 m-0 flex items-center gap-3">
               {CITY_NAMES[selectedCity]} Command Console
+              <Tag color="red" className="animate-pulse border-red-500/30 bg-red-500/10 text-red-400 m-0">
+                <AlertTriangle size={12} className="inline mr-1" />
+                Heatwave Warning: +2.4°C Anomaly Detected
+              </Tag>
             </h1>
             <span className="text-xs text-slate-400">
               Satellite LST & NDVI Heat Mitigation Engine
             </span>
-          </div>
-
+          </motion.div>
           <Row gutter={16} className="flex-1 max-w-[650px] justify-end">
             <Col xs={12} sm={8} md={8}>
               <Card size="small" className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition">
