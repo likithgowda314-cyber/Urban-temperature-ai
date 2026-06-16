@@ -75,15 +75,16 @@ export default function GoogleMapComponent({ cityCenter, gridData, selectedCell,
       data: heatPoints,
       getPosition: d => d.coordinates,
       getWeight: d => d.weight,
-      radiusPixels: 80,
-      intensity: 1.5,
+      radiusPixels: 50,
+      intensity: 1.2,
       threshold: 0.05,
+      opacity: 0.5,
       colorRange: [
         [0, 255, 255, 0],
-        [16, 185, 129, 255], // emerald-500
-        [234, 179, 8, 255],  // yellow-500
-        [249, 115, 22, 255], // orange-500
-        [239, 68, 68, 255]   // red-500
+        [16, 185, 129, 200], // emerald-500 with alpha
+        [234, 179, 8, 200],  // yellow-500
+        [249, 115, 22, 200], // orange-500
+        [239, 68, 68, 200]   // red-500
       ]
     });
 
